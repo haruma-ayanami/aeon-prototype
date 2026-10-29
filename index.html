@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AEON — макеты и прототип</title>
+<meta name="description" content="Макеты клиентских приложений AEON и интерактивные сценарии: веб, Windows, iOS, Android, панель администратора.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230A0C0B'/%3E%3Cpath d='M4 4h3v3H4zM9 4h3v3H9zM4 9h3v3H4z' fill='%23F2F5F1'/%3E%3Cpath d='M9 9h3v3H9z' fill='%23B6F36B'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#/cover" aria-label="AEON, обложка">
+    <svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2z" fill="currentColor"/><path d="M9 9h5v5H9z" fill="var(--sig)"/></svg>
+    <span>AEON</span>
+  </a>
+  <nav class="tabs" id="tabs" aria-label="Страницы холста"></nav>
+  <div class="zoom" role="group" aria-label="Масштаб">
+    <button id="zoomOut" class="ib" aria-label="Уменьшить">−</button>
+    <button id="zoomFit" class="zl" aria-label="Показать страницу целиком"><span id="zoomVal">100%</span></button>
+    <button id="zoomIn" class="ib" aria-label="Увеличить">+</button>
+  </div>
+</header>
+
+<main id="vp" class="vp" tabindex="0" aria-label="Холст">
+  <div id="world" class="world"></div>
+  <p class="hint" id="hint">Перетаскивайте холст, масштаб — колесом с Ctrl или жестом. Нажмите на артборд, чтобы открыть его.</p>
+</main>
+
+<section id="viewer" class="ov" hidden aria-modal="true" role="dialog" aria-labelledby="vTitle">
+  <div class="bar">
+    <button class="ib" id="vBack" aria-label="Назад">‹</button>
+    <div class="bt"><span class="lbl" id="vPage"></span><span class="tt" id="vTitle"></span></div>
+    <label class="chk"><input type="checkbox" id="vLinks"> <span>Переходы</span></label>
+    <button class="ib" id="vPrev" aria-label="Предыдущий артборд">←</button>
+    <button class="ib" id="vNext" aria-label="Следующий артборд">→</button>
+    <button class="ib" id="vClose" aria-label="Закрыть">✕</button>
+  </div>
+  <div class="stage" id="vStage"><div class="frame" id="vFrame"><img id="vImg" alt=""><div class="hots" id="vHots"></div></div></div>
+</section>
+
+<section id="player" class="ov" hidden aria-modal="true" role="dialog" aria-labelledby="pTitle">
+  <div class="bar">
+    <button class="ib" id="pBack" aria-label="Предыдущий шаг">‹</button>
+    <div class="bt"><span class="lbl" id="pTitle"></span><span class="tt" id="pStep" aria-live="polite"></span><div class="segs" id="pSegs"></div></div>
+    <button class="ib" id="pNext" aria-label="Следующий шаг">›</button>
+    <button class="ib" id="pRestart" aria-label="Начать сначала">↺</button>
+    <button class="ib" id="pClose" aria-label="Закрыть">✕</button>
+  </div>
+  <div class="stage" id="pStage"><div class="frame" id="pFrame"><img id="pImg" alt=""><div class="hots on" id="pHots"></div></div></div>
+</section>
+
+<footer class="foot">Статическая копия холста дизайна AEON от 29.10.2026 · изображения референсов сторонних авторов не публикуются</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
