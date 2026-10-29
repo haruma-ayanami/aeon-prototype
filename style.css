@@ -19,6 +19,13 @@ button { font: inherit; color: inherit; }
 .tabs a:hover { color: var(--t1); background: var(--raised); }
 .tabs a[aria-current="page"] { color: #0A0C0B; background: var(--t1); }
 .tabs a .n { font: 500 11px 'JetBrains Mono', monospace; opacity: .6; margin-left: 5px; }
+.ctls { flex: none; display: flex; gap: 6px; }
+.seg { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--raised); }
+.seg button { min-width: 34px; height: 30px; padding: 0 9px; border: 0; border-radius: 999px; background: transparent; color: var(--t2); cursor: pointer; font: 500 12px 'JetBrains Mono', monospace; display: inline-flex; align-items: center; justify-content: center; }
+.seg button:hover { color: var(--t1); }
+.seg button[aria-pressed="true"] { background: var(--t1); color: #0A0C0B; }
+.seg.na { opacity: .45; }
+.seg.na button[aria-pressed="true"] { background: var(--bst); color: var(--t1); }
 .zoom { flex: none; display: flex; align-items: center; gap: 2px; background: var(--raised); border-radius: 999px; padding: 3px; }
 .zl { min-width: 58px; height: 30px; border: 0; background: transparent; border-radius: 999px; cursor: pointer; font: 500 12px 'JetBrains Mono', monospace; color: var(--t2); }
 .zl:hover { color: var(--t1); }
@@ -66,6 +73,9 @@ button { font: inherit; color: inherit; }
   .tabs { order: 3; flex-basis: 100%; }
   .brand { flex: 1; }
   .chk span { display: none; }
+  .zoom { display: none; }
+  .bar { flex-wrap: wrap; }
+  .bar .ctls { order: 5; flex-basis: 100%; justify-content: flex-end; }
   .stage { padding: 8px; }
   .segs { max-width: none; }
 }

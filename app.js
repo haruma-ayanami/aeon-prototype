@@ -6,6 +6,36 @@
   const byPage = {};
   for (const n of D.order) (byPage[D.boards[n].p] ||= []).push(n);
 
+  // ---------- язык и тема макетов ----------
+  const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } };
+  let LANG = store('aeon.lang') === 'en' ? 'en' : 'ru', THEME = store('aeon.theme') === 'light' ? 'light' : 'dark';
+  const keyOf = (n) => { const b = D.boards[n]; return (b.sl ? LANG : b.dl) + '-' + (b.st ? THEME : b.dt); };
+  const img = (n, size) => `img/${keyOf(n)}/${size}/${n}.webp`;
+  const scen = (n) => D.proto[n] && D.proto[n][LANG + '-' + THEME];
+
+  function syncCtls() {
+    const b = !$('viewer').hidden && vName ? D.boards[vName] : null;
+    for (const seg of document.querySelectorAll('.seg')) {
+      const cur = seg.dataset.ctl === 'lang' ? LANG : THEME;
+      for (const btn of seg.querySelectorAll('button')) btn.setAttribute('aria-pressed', String(btn.dataset.v === cur));
+      const na = b && (seg.dataset.ctl === 'lang' ? !b.sl : !b.st);
+      seg.classList.toggle('na', !!na);
+      seg.title = na ? (seg.dataset.ctl === 'lang' ? 'У этого артборда один язык' : 'У этого артборда одна тема') : '';
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.seg button');
+    if (!btn) return;
+    if (btn.parentElement.dataset.ctl === 'lang') { LANG = btn.dataset.v; store('aeon.lang', LANG); }
+    else { THEME = btn.dataset.v; store('aeon.theme', THEME); }
+    for (const el of world.querySelectorAll('.board')) { const im = el.lastElementChild; delete im.dataset.hi; im.src = img(el.dataset.n, 'thumb'); }
+    swapHiRes();
+    if (!$('viewer').hidden && vName) openViewer(vName, false);
+    if (!$('player').hidden && pName) openPlayer(pName, pStep);
+    syncCtls();
+  });
+
   // ---------- холст ----------
   let page = null, s = 1, tx = 0, ty = 0, swapTimer = 0, touched = false;
   const MAXS = 2;
@@ -61,7 +91,7 @@
     for (const n of byPage[pid]) {
       const b = D.boards[n];
       h += `<div class="board${D.proto[n] ? ' pr' : ''}" data-n="${n}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px" title="${esc(b.t)}">` +
-        `<span class="bl">${D.proto[n] ? '▶ ' : ''}${esc(b.t)}</span><img alt="${esc(b.t)}" src="img/thumb/${n}.webp" draggable="false"></div>`;
+        `<span class="bl">${D.proto[n] ? '▶ ' : ''}${esc(b.t)}</span><img alt="${esc(b.t)}" src="${img(n, 'thumb')}" draggable="false"></div>`;
     }
     world.innerHTML = h;
     document.title = `AEON — ${pageOf[pid].name}`;
@@ -72,11 +102,11 @@
   function swapHiRes() {
     const dpr = window.devicePixelRatio || 1, W = vp.clientWidth, H = vp.clientHeight;
     for (const el of world.querySelectorAll('.board')) {
-      const img = el.lastElementChild;
-      if (img.dataset.hi) continue;
+      const im = el.lastElementChild;
+      if (im.dataset.hi) continue;
       const r = el.getBoundingClientRect();
       if (r.right < 0 || r.left > W || r.bottom < 0 || r.top > H + 60) continue;
-      if (r.width * dpr > 600) { img.dataset.hi = 1; img.src = `img/full/${el.dataset.n}.webp`; }
+      if (r.width * dpr > 600) { im.dataset.hi = 1; im.src = img(el.dataset.n, 'full'); }
     }
   }
 
@@ -153,19 +183,20 @@
     $('vPage').textContent = pageOf[b.p].name;
     $('vTitle').textContent = b.t;
     $('vBack').disabled = !vStack.length;
-    const img = $('vImg');
-    img.src = `img/thumb/${n}.webp`;
+    const im = $('vImg'), key = keyOf(n);
+    im.src = img(n, 'thumb');
     const hi = new Image();
-    hi.onload = () => { if (vName === n) img.src = hi.src; };
-    hi.src = `img/full/${n}.webp`;
-    img.alt = b.t;
-    $('vHots').innerHTML = (b.l || []).filter((l) => D.boards[l[0]] && l[0] !== n).map((l) =>
+    hi.onload = () => { if (vName === n && keyOf(n) === key) im.src = hi.src; };
+    hi.src = img(n, 'full');
+    im.alt = b.t;
+    $('vHots').innerHTML = ((b.lk || {})[key] || []).filter((l) => D.boards[l[0]] && l[0] !== n).map((l) =>
       `<button class="hot lk" data-to="${l[0]}" title="Перейти: ${esc(D.boards[l[0]].t)}" aria-label="Перейти: ${esc(D.boards[l[0]].t)}" style="${pct(l, b)}"></button>`).join('');
     const list = byPage[b.p], i = list.indexOf(n);
     $('vPrev').disabled = i <= 0; $('vNext').disabled = i >= list.length - 1;
     $('vStage').scrollTop = 0;
     layoutOverlay();
     document.title = `AEON — ${b.t}`;
+    syncCtls();
   }
 
   $('vHots').addEventListener('click', (e) => {
@@ -185,21 +216,21 @@
   let pName = null, pStep = 1;
 
   function openPlayer(n, k) {
-    const sc = D.proto[n];
+    const sc = scen(n);
     if (!sc) return closeAll();
     pName = n; pStep = Math.min(Math.max(k || 1, 1), sc.steps.length);
     const st = sc.steps[pStep - 1];
     $('viewer').hidden = true;
     $('player').hidden = false;
     $('pTitle').textContent = sc.title;
-    $('pStep').textContent = `Шаг ${pStep} из ${sc.steps.length} · ${st.name}`;
+    $('pStep').textContent = (LANG === 'en' ? `Step ${pStep} of ${sc.steps.length}` : `Шаг ${pStep} из ${sc.steps.length}`) + ` · ${st.name}`;
     $('pSegs').innerHTML = sc.steps.map((x, i) =>
       `<button data-k="${i + 1}" class="${i < pStep ? 'done' : ''}" aria-label="Шаг ${i + 1}: ${esc(x.name)}"${i + 1 === pStep ? ' aria-current="step"' : ''}><span></span></button>`).join('');
     $('pBack').disabled = pStep === 1;
     $('pNext').disabled = pStep === sc.steps.length;
-    const img = $('pImg');
-    img.src = 'img/' + st.img;
-    img.alt = `${sc.title}, шаг ${pStep}: ${st.name}`;
+    const im = $('pImg');
+    im.src = 'img/' + st.img;
+    im.alt = `${sc.title}, шаг ${pStep}: ${st.name}`;
     $('pHots').innerHTML = st.hot.map((h) =>
       `<button class="hot" ${h.go ? `data-go="${h.go}"` : `data-to="${h.href}"`} aria-label="${esc(h.label || 'Дальше')}" title="${esc(h.label || '')}" style="${pct([0, ...h.r], st)}"></button>`).join('');
     $('pStage').scrollTop = 0;
@@ -207,13 +238,14 @@
     // предзагрузка следующих шагов
     for (const x of sc.steps.slice(pStep, pStep + 2)) new Image().src = 'img/' + x.img;
     document.title = `AEON — ${sc.title}`;
+    syncCtls();
   }
 
   $('pHots').addEventListener('click', (e) => {
     const t = e.target.closest('.hot');
     if (!t) return;
     if (t.dataset.go) go(`#/proto/${pName}/${t.dataset.go}`);
-    else { const sc = D.proto[pName]; go(`#/proto/${pName}/${Math.min(pStep + 1, sc.steps.length)}`); }
+    else { const sc = scen(pName); go(`#/proto/${pName}/${Math.min(pStep + 1, sc.steps.length)}`); }
   });
   $('pSegs').addEventListener('click', (e) => { const t = e.target.closest('[data-k]'); if (t) go(`#/proto/${pName}/${t.dataset.k}`); });
   $('pBack').onclick = () => go(`#/proto/${pName}/${pStep - 1}`);
@@ -223,7 +255,7 @@
 
   function layoutOverlay() {
     if (!$('viewer').hidden && vName) { const b = D.boards[vName]; fitFrame($('vFrame'), $('vStage'), b.w, b.h, b.w <= 600 ? 2 : 1); }
-    if (!$('player').hidden && pName) { const st = D.proto[pName].steps[pStep - 1]; fitFrame($('pFrame'), $('pStage'), st.w, st.h, st.w <= 1000 ? 1.6 : 1); }
+    if (!$('player').hidden && pName) { const st = scen(pName).steps[pStep - 1]; fitFrame($('pFrame'), $('pStage'), st.w, st.h, st.w <= 1000 ? 1.6 : 1); }
   }
 
   function closeAll() {
@@ -255,7 +287,7 @@
     const pid = pageOf[a] ? a : (D.boards[a] ? D.boards[a].p : 'cover');
     showPage(pid);
     if (b && D.boards[b]) { if (!push && !pop) vStack.length = 0; openViewer(b, push); }
-    else { $('viewer').hidden = true; $('player').hidden = true; vName = null; pName = null; vStack.length = 0; document.title = `AEON — ${pageOf[pid].name}`; }
+    else { $('viewer').hidden = true; $('player').hidden = true; vName = null; pName = null; vStack.length = 0; document.title = `AEON — ${pageOf[pid].name}`; syncCtls(); }
   }
 
   function pct(l, b) {
@@ -266,4 +298,5 @@
   tabs();
   window.addEventListener('hashchange', route);
   route();
+  syncCtls();
 })();
